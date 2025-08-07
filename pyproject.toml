@@ -16,8 +16,7 @@ dependencies = [
   "pydantic-settings>=2.6.1",
   "pyjwt>=2.10.1",
   "starlette-cramjam>=0.4.0",
-  "uvicorn>=0.32.1",
-  "kubenetes"
+  "uvicorn>=0.32.1"
 ]
 description = "STAC authentication proxy with FastAPI"
 keywords = ["STAC", "FastAPI", "Authentication", "Proxy"]

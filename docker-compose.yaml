@@ -38,6 +38,8 @@ services:
       ES_HOST: database-os
       ES_PORT: 9200
       ES_USE_SSL: false
+      STAC_COLLECTIONS_INDEX: atomic_demo_collections 
+      STAC_ITEMS_INDEX_PREFIX: atomic_demo_items_
       ES_VERIFY_CERTS: false
       BACKEND: opensearch
       STAC_FASTAPI_RATE_LIMIT: 200/minute
@@ -90,7 +92,6 @@ services:
     environment:
       UPSTREAM_URL: ${UPSTREAM_URL:-http://stac:8001}
       OIDC_DISCOVERY_URL: ${OIDC_DISCOVERY_URL:-http://localhost:8888/.well-known/openid-configuration}
-      OIDC_DISCOVERY_INTERNAL_URL: ${OIDC_DISCOVERY_INTERNAL_URL:-http://oidc:8888/.well-known/openid-configuration}
     env_file:
       - path: .env
         required: false
