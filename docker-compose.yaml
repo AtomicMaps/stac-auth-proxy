@@ -38,8 +38,6 @@ services:
       ES_HOST: database-os
       ES_PORT: 9200
       ES_USE_SSL: false
-      STAC_COLLECTIONS_INDEX: atomic_demo_collections 
-      STAC_ITEMS_INDEX_PREFIX: atomic_demo_items_
       ES_VERIFY_CERTS: false
       BACKEND: opensearch
       STAC_FASTAPI_RATE_LIMIT: 200/minute
