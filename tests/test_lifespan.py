@@ -39,7 +39,7 @@ async def test_check_server_health_failure():
     # NOTE: Concurrency issues makes this test flaky
     # assert mock_sleep.call_args_list[0][0][0] == 1.0
     # Last call should be with max delay
-    assert mock_sleep.call_args_list[-1][0][0] == 5.0
+    assert mock_sleep.call_args_list[-1][0][0] == 10.0
 
 
 async def test_check_conformance_success(source_api_server, source_api_responses):
