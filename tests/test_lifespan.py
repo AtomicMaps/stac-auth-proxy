@@ -39,7 +39,7 @@ async def test_check_server_health_failure():
     # NOTE: Concurrency issues makes this test flaky
     # assert mock_sleep.call_args_list[0][0][0] == 1.0
     # Last call should be with max delay
-    assert mock_sleep.call_args_list[-1][0][0] == 5.0
+    assert mock_sleep.call_args_list[-1][0][0] == 10.0
 
 
 async def test_check_conformance_success(source_api_server, source_api_responses):
@@ -89,13 +89,16 @@ def test_lifespan_reusable():
     """Ensure the public lifespan handler runs health and conformance checks."""
     upstream_url = "https://example.com"
     oidc_discovery_url = "https://example.com/.well-known/openid-configuration"
-    with patch(
-        "stac_auth_proxy.lifespan.check_server_health",
-        new=AsyncMock(),
-    ) as mock_health, patch(
-        "stac_auth_proxy.lifespan.check_conformance",
-        new=AsyncMock(),
-    ) as mock_conf:
+    with (
+        patch(
+            "stac_auth_proxy.lifespan.check_server_health",
+            new=AsyncMock(),
+        ) as mock_health,
+        patch(
+            "stac_auth_proxy.lifespan.check_conformance",
+            new=AsyncMock(),
+        ) as mock_conf,
+    ):
         app = FastAPI(
             lifespan=build_lifespan(
                 upstream_url=upstream_url,

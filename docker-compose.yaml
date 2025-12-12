@@ -1,10 +1,13 @@
 services:
   stac-pg:
     profiles: [""] # default profile
-    image: ghcr.io/stac-utils/stac-fastapi-pgstac:5.0.2
+    image: ghcr.io/stac-utils/stac-fastapi-pgstac:6.1.1
     environment:
+      STAC_FASTAPI_TITLE: stac-fastapi-pgstac + stac-auth-proxy
+      STAC_FASTAPI_DESCRIPTION: A STAC FastAPI implemented with pgSTAC, protected with STAC Auth Proxy
       APP_HOST: 0.0.0.0
       APP_PORT: 8001
+      CORS_HEADERS: "*"
       RELOAD: true
       POSTGRES_USER: username
       POSTGRES_PASS: password
@@ -20,16 +23,16 @@ services:
       - "8001:8001"
     depends_on:
       - database-pg
-    command: bash -c "./scripts/wait-for-it.sh database-pg:5432 && python -m stac_fastapi.pgstac.app"
+    command: python -m stac_fastapi.pgstac.app
+    # command: bash -c "./scripts/wait-for-it.sh database-pg:5432 && python -m stac_fastapi.pgstac.app"
 
   stac-os:
     profiles: ["os"]
     container_name: stac-fastapi-os
-    image: ghcr.io/stac-utils/stac-fastapi-os:v6.1.0
+    image: ghcr.io/stac-utils/stac-fastapi-os:v6.7.6
     environment:
-      STAC_FASTAPI_TITLE: stac-fastapi-opensearch
-      STAC_FASTAPI_DESCRIPTION: A STAC FastAPI with an Opensearch backend
-      STAC_FASTAPI_VERSION: 6.0.0
+      STAC_FASTAPI_TITLE: stac-fastapi-opensearch + stac-auth-proxy
+      STAC_FASTAPI_DESCRIPTION: A STAC FastAPI with an Opensearch backend, protected with STAC Auth Proxy
       STAC_FASTAPI_LANDING_PAGE_ID: stac-fastapi-opensearch
       APP_HOST: 0.0.0.0
       APP_PORT: 8001
@@ -91,6 +94,15 @@ services:
       UPSTREAM_URL: ${UPSTREAM_URL:-http://stac:8001}
       OIDC_DISCOVERY_URL: ${OIDC_DISCOVERY_URL:-http://localhost:8888/.well-known/openid-configuration}
       OIDC_DISCOVERY_INTERNAL_URL: ${OIDC_DISCOVERY_INTERNAL_URL:-http://oidc:8888/.well-known/openid-configuration}
+      ITEMS_FILTER_CLS: stac_auth_proxy.filters.scope_based_item_filter:scope_based_filter
+      ITEMS_FILTER_ARGS: '["superuser"]'
+      OPENAPI_AUTH_SCHEME_NAME: jwtAuth
+      OPENAPI_AUTH_SCHEME_OVERRIDE: '{
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Paste your raw JWT here. This API uses Bearer token authorization."
+        }'
     env_file:
       - path: .env
         required: false
@@ -107,3 +119,18 @@ services:
       PORT: 8888
     ports:
       - "8888:8888"
+
+  stac-browser:
+    image: ghcr.io/radiantearth/stac-browser:latest
+    ports:
+      - 8080:8080
+    environment:
+      SB_catalogUrl: "http://localhost:8000"
+      SB_authConfig: |
+        {
+          "type": "openIdConnect",
+          "openIdConnectUrl": "http://localhost:8888/.well-known/openid-configuration",
+          "oidcOptions": {
+            "client_id": "stac-browser"
+          }
+        }
