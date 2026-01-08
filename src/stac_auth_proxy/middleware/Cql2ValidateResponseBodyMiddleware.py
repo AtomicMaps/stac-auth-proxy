@@ -81,7 +81,7 @@ class Cql2ValidateResponseBodyMiddleware:
                 status=502,
                 content={
                     "code": "ParseError",
-                    "description": "Failed to parse response body as JSON",
+                    "description": f"Failed to parse response body as JSON: RAW BODY: {body}",
                 },
             )
             return
