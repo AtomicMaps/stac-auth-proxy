@@ -75,7 +75,7 @@ class Cql2ValidateResponseBodyMiddleware:
         try:
             body_json = json.loads(body)
         except json.JSONDecodeError:
-            logger.warning("Failed to parse response body as JSON")
+            logger.warning("Failed to parse response body as JSON. RAW BODY: {body}")
             await self._send_json_response(
                 send,
                 status=502,
