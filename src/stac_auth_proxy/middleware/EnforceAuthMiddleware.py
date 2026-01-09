@@ -9,8 +9,9 @@ import httpx
 import jwt
 from fastapi import HTTPException, Request, Security, status
 from pydantic import HttpUrl
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
+
 
 from ..config import EndpointMethods
 from ..utils.requests import find_match
@@ -88,7 +89,25 @@ class EnforceAuthMiddleware:
 
         # Skip authentication for OPTIONS requests, https://fetch.spec.whatwg.org/#cors-protocol-and-credentials
         if request.method == "OPTIONS":
-            return await self.app(scope, receive, send)
+            origin = request.headers.get("origin")
+            if not origin:
+                # If no origin header, just return 204 without CORS headers
+                # or handle it differently based on your requirements
+                origin = "*"
+
+            response = Response(
+                status_code=204,
+                headers={
+                    "Access-Control-Allow-Origin": origin,
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+                    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "86400",
+                    "Vary": "Origin",
+                },
+            )
+            await response(scope, receive, send)
+            return
 
         match = find_match(
             request.url.path,
