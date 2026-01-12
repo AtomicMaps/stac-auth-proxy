@@ -95,7 +95,7 @@ class EnforceAuthMiddleware:
                 origin = "*"
 
             response = Response(
-                status_code=204,
+                status_code=200,
                 headers={
                     "Access-Control-Allow-Origin": origin,
                     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
