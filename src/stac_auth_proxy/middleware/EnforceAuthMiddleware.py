@@ -12,7 +12,6 @@ from pydantic import HttpUrl
 from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-
 from ..config import EndpointMethods
 from ..utils.requests import find_match
 
