@@ -1,6 +1,8 @@
 """Tooling to manage the reverse proxying of requests to an upstream STAC API."""
 
+import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -11,9 +13,6 @@ from starlette.responses import Response
 
 from stac_auth_proxy.utils.requests import build_server_timing_header
 from stac_auth_proxy.version import __version__ as auth_proxy_version
-import re
-import json
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -120,8 +119,10 @@ class ReverseProxyHandler:
             status_code=rp_resp.status_code,
             headers=dict(rp_resp.headers),
         )
-    
-    def _add_version_to_content(self, content: bytes, response: httpx.Response) -> bytes:
+
+    def _add_version_to_content(
+        self, content: bytes, response: httpx.Response
+    ) -> bytes:
         """Add auth_proxy_version to JSON response content."""
         # Only modify if response is JSON
         content_type = response.headers.get("content-type", "")
@@ -131,10 +132,10 @@ class ReverseProxyHandler:
         try:
             # Parse the JSON content
             data = json.loads(content)
-            
+
             # Add the version field
             data["auth_proxy_version"] = auth_proxy_version
-            
+
             # Convert back to JSON bytes
             return json.dumps(data).encode("utf-8")
         except (json.JSONDecodeError, TypeError) as e:
