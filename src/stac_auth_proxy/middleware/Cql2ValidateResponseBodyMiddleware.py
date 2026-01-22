@@ -73,12 +73,12 @@ class Cql2ValidateResponseBodyMiddleware:
     ):
         body = b"".join(body_chunks)
 
-        # Get the status code from response_start
         status_code = response_start.get("status", 200)
-        
-        # Handle responses with no body (204, 304, etc.) or empty body
+
         if not body or status_code in (204, 304):
-            logger.debug(f"Response has no body (status {status_code}), passing through without filtering")
+            logger.debug(
+                f"Response has no body (status {status_code}), passing through without filtering"
+            )
             await send(response_start)
             await send(
                 {
@@ -88,7 +88,7 @@ class Cql2ValidateResponseBodyMiddleware:
                 }
             )
             return
-    
+
         try:
             body_json = json.loads(body)
         except json.JSONDecodeError:

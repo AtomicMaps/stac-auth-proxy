@@ -24,7 +24,7 @@ def scope_based_filter(superuser_role: str = "superuser"):
         payload = ctx.get("payload")
 
         if payload:
-            role_claim = payload.get("scope", [])
+            role_claim = payload.get("_roles", [])
             roles = (
                 role_claim.split() if isinstance(role_claim, str) else role_claim or []
             )
