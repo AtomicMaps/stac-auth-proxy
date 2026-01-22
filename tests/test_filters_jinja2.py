@@ -73,8 +73,7 @@ SEARCH_GET_QUERIES = [
         {
             "bbox": "160.6,-55.95,-170,-25.89",
             "filter-lang": "cql2-text",
-            # UPDATED: Changed grouping to match pygeofilter output
-            "filter": "(((collection = 'landsat-8-l1') AND (\"eo:cloud_cover\" <= 20)) AND (platform = 'landsat-8'))",
+            "filter": "((collection = 'landsat-8-l1') AND (\"eo:cloud_cover\" <= 20) AND (platform = 'landsat-8'))",
             "limit": "5",
         },
         id="with_filter_text",
@@ -110,8 +109,7 @@ ITEMS_LIST_QUERIES = [
     pytest.param(
         {
             "filter-lang": "cql2-text",
-            # UPDATED: Changed grouping to match pygeofilter output
-            "filter": "(((collection = 'landsat-8-l1') AND (\"eo:cloud_cover\" <= 20)) AND (platform = 'landsat-8'))",
+            "filter": "((collection = 'landsat-8-l1') AND (\"eo:cloud_cover\" <= 20) AND (platform = 'landsat-8'))",
         },
         id="items_with_filter",
     ),
@@ -221,35 +219,19 @@ async def test_search_get(
     response = client.get("/search", params=input_query)
     response.raise_for_status()
 
+    # For GET, we expect the upstream body to be empty, but URL params to be appended
     proxied_request = await get_upstream_request(mock_upstream)
     assert proxied_request.body == ""
 
-    # Build expected filter using the same logic as the actual code
-    from pygeofilter.backends.cql2_json import to_cql2
-    from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
-
+    # Determine the expected combined filter
     proxy_filter = cql2.Expr(
         expected_auth_filter if is_authenticated else expected_anon_filter
     )
-
     input_filter = input_query.get("filter")
-    filter_lang = input_query.get("filter-lang", "cql2-text")
-
     if input_filter:
-        if filter_lang == "cql2-text":
-            # Match the actual code's logic
-            parsed_ast = parse_cql2_text(input_filter)
-            cur_filter_json = to_cql2(parsed_ast)
-            cur_filter_expr = cql2.Expr(cur_filter_json)
-        else:
-            cur_filter_expr = cql2.Expr(
-                json.loads(input_filter)
-                if isinstance(input_filter, str)
-                else input_filter
-            )
+        proxy_filter += cql2.Expr(input_filter)
 
-        proxy_filter += cur_filter_expr
-
+    filter_lang = input_query.get("filter-lang", "cql2-text")
     expected_output = {
         **input_query,
         "filter": (
@@ -294,26 +276,18 @@ async def test_items_list(
     proxied_request = await get_upstream_request(mock_upstream)
     assert proxied_request.body == ""
 
-    # Build expected filter using the same logic as the actual code
-    from pygeofilter.backends.cql2_json import to_cql2
-    from pygeofilter.parsers.cql2_text import parse as parse_cql2_text
-
+    # Only the appended filter (no input_filter merges in these particular tests),
+    # but you could do similar merging logic if needed.
     proxy_filter = cql2.Expr(
         expected_auth_filter if is_authenticated else expected_anon_filter
     )
-
-    input_filter = input_query.get("filter")
-
-    if input_filter:
-        # Match the actual code's logic for parsing CQL2 text
-        parsed_ast = parse_cql2_text(input_filter)
-        cur_filter_json = to_cql2(parsed_ast)
-        cur_filter_expr = cql2.Expr(cur_filter_json)
-        proxy_filter += cur_filter_expr
-
     assert proxied_request.query_params == {
         "filter-lang": "cql2-text",
-        "filter": proxy_filter.to_text(),
+        "filter": (
+            proxy_filter + cql2.Expr(qs_filter)
+            if (qs_filter := input_query.get("filter"))
+            else proxy_filter
+        ).to_text(),
     }, "Items query should include only the appended filter expression."
 
 
