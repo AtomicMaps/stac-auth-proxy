@@ -72,16 +72,33 @@ class Cql2ValidateResponseBodyMiddleware:
         self, response_start, body_chunks, send, cql2_filter
     ):
         body = b"".join(body_chunks)
+
+        status_code = response_start.get("status", 200)
+
+        if not body or status_code in (204, 304):
+            logger.debug(
+                f"Response has no body (status {status_code}), passing through without filtering"
+            )
+            await send(response_start)
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": body,
+                    "more_body": False,
+                }
+            )
+            return
+
         try:
             body_json = json.loads(body)
         except json.JSONDecodeError:
-            logger.warning("Failed to parse response body as JSON")
+            logger.warning("Failed to parse response body as JSON. Raw body: {body}")
             await self._send_json_response(
                 send,
                 status=502,
                 content={
                     "code": "ParseError",
-                    "description": "Failed to parse response body as JSON",
+                    "description": f"Failed to parse response body as JSON: Raw body: {body}",
                 },
             )
             return

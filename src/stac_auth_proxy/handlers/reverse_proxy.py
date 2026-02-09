@@ -1,6 +1,8 @@
 """Tooling to manage the reverse proxying of requests to an upstream STAC API."""
 
+import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -10,6 +12,7 @@ from starlette.datastructures import MutableHeaders
 from starlette.responses import Response
 
 from stac_auth_proxy.utils.requests import build_server_timing_header
+from stac_auth_proxy.version import __version__ as auth_proxy_version
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +36,10 @@ class ReverseProxyHandler:
             timeout=self.timeout,
             http2=True,
         )
+
+    def _is_root_path(self, path: str) -> bool:
+        """Check if the path is the root path."""
+        return re.match(r"^/$", path) is not None
 
     def _prepare_headers(self, request: Request) -> MutableHeaders:
         """Prepare headers for the proxied request."""
@@ -104,8 +111,33 @@ class ReverseProxyHandler:
         if rp_resp.headers.get("Content-Encoding"):
             del rp_resp.headers["Content-Encoding"]
 
+        if self._is_root_path(request.url.path) and request.method == "GET":
+            content = self._add_version_to_content(content, rp_resp)
+
         return Response(
             content=content,
             status_code=rp_resp.status_code,
             headers=dict(rp_resp.headers),
         )
+
+    def _add_version_to_content(
+        self, content: bytes, response: httpx.Response
+    ) -> bytes:
+        """Add auth_proxy_version to JSON response content."""
+        # Only modify if response is JSON
+        content_type = response.headers.get("content-type", "")
+        if "application/json" not in content_type:
+            return content
+
+        try:
+            # Parse the JSON content
+            data = json.loads(content)
+
+            # Add the version field
+            data["auth_proxy_version"] = auth_proxy_version
+
+            # Convert back to JSON bytes
+            return json.dumps(data).encode("utf-8")
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning(f"Failed to add auth_proxy_version to response: {e}")
+            return content
