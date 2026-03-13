@@ -89,29 +89,7 @@ class EnforceAuthMiddleware:
 
         # Skip authentication for OPTIONS requests, https://fetch.spec.whatwg.org/#cors-protocol-and-credentials
         if request.method == "OPTIONS":
-            if self.proxy_options:
-                # When proxy_options=True, forward OPTIONS to upstream without auth
-                return await self.app(scope, receive, send)
-
-            origin = request.headers.get("origin")
-            if not origin:
-                # If no origin header, just return 204 without CORS headers
-                # or handle it differently based on your requirements
-                origin = "*"
-
-            response = Response(
-                status_code=200,
-                headers={
-                    "Access-Control-Allow-Origin": origin,
-                    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-                    "Access-Control-Allow-Headers": "Authorization, Content-Type",
-                    "Access-Control-Allow-Credentials": "true",
-                    "Access-Control-Max-Age": "86400",
-                    "Vary": "Origin",
-                },
-            )
-            await response(scope, receive, send)
-            return
+            return await self.app(scope, receive, send)
 
         match = find_match(
             request.url.path,
