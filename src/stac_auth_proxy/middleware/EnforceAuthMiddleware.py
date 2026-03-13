@@ -9,7 +9,7 @@ import httpx
 import jwt
 from fastapi import HTTPException, Request, Security, status
 from pydantic import HttpUrl
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from ..config import EndpointMethods
