@@ -19,7 +19,7 @@ __all__ = ["build_lifespan", "check_conformance", "check_server_health"]
 
 async def check_server_healths(*urls: str | HttpUrl) -> None:
     """Wait for upstream APIs to become available."""
-    logger.info("Running upstream server health checks...")
+    logger.debug("Running upstream server health checks...")
     for url in urls:
         await check_server_health(url)
     logger.info(
@@ -45,16 +45,20 @@ async def check_server_health(
             try:
                 response = await client.get(url)
                 response.raise_for_status()
-                logger.info(f"Upstream API {url!r} is healthy")
+                logger.debug(f"Upstream API {url!r} is healthy")
                 return
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code not in {502, 503, 504}:
+                    raise
+                logger.warning(f"Upstream health check for {url!r} failed: {e}")
             except httpx.ConnectError as e:
                 logger.warning(f"Upstream health check for {url!r} failed: {e}")
-                retry_in = min(retry_delay * (2**attempt), retry_delay_max)
-                logger.warning(
-                    f"Upstream API {url!r} not healthy, retrying in {retry_in:.1f}s "
-                    f"(attempt {attempt + 1}/{max_retries})"
-                )
-                await asyncio.sleep(retry_in)
+            retry_in = min(retry_delay * (2**attempt), retry_delay_max)
+            logger.warning(
+                f"Upstream API {url!r} not healthy, retrying in {retry_in:.1f}s "
+                f"(attempt {attempt + 1}/{max_retries})"
+            )
+            await asyncio.sleep(retry_in)
 
     raise RuntimeError(
         f"Upstream API {url!r} failed to respond after {max_retries} attempts"
@@ -101,10 +105,13 @@ async def check_conformance(
                 ]
             )
         )
-    logger.info(
-        "Upstream catalog conforms to the following required conformance classes: \n%s",
-        "\n".join([conformance_str(c) for c in required_conformances]),
-    )
+    if required_conformances:
+        logger.info(
+            "Upstream catalog conforms to the following required conformance classes: \n%s",
+            "\n".join([conformance_str(c) for c in required_conformances]),
+        )
+    else:
+        logger.info("No required conformance classes specified by middleware")
 
 
 def build_lifespan(settings: Settings | None = None, **settings_kwargs: Any):

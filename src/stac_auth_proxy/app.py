@@ -9,6 +9,7 @@ import logging
 from typing import Any, Optional
 
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 from starlette_cramjam.middleware import CompressionMiddleware
 
 from .config import Settings
@@ -22,6 +23,7 @@ from .middleware import (
     Cql2BuildFilterMiddleware,
     Cql2RewriteLinksFilterMiddleware,
     Cql2ValidateResponseBodyMiddleware,
+    Cql2ValidateTransactionMiddleware,
     EnforceAuthMiddleware,
     OpenApiMiddleware,
     ProcessLinksMiddleware,
@@ -106,10 +108,22 @@ def configure_app(
             root_path=settings.root_path,
             auth_scheme_name=settings.openapi_auth_scheme_name,
             auth_scheme_override=settings.openapi_auth_scheme_override,
+            items_filter_path=(
+                settings.items_filter_path if settings.items_filter else None
+            ),
+            collections_filter_path=(
+                settings.collections_filter_path
+                if settings.collections_filter
+                else None
+            ),
         )
 
     if settings.items_filter or settings.collections_filter:
         app.add_middleware(Cql2ValidateResponseBodyMiddleware)
+        app.add_middleware(
+            Cql2ValidateTransactionMiddleware,
+            upstream_url=str(settings.upstream_url),
+        )
         app.add_middleware(Cql2ApplyFilterBodyMiddleware)
         app.add_middleware(Cql2ApplyFilterQueryStringMiddleware)
         app.add_middleware(Cql2RewriteLinksFilterMiddleware)
@@ -154,6 +168,42 @@ def configure_app(
             CompressionMiddleware,
         )
 
+    if not settings.proxy_options:
+        # When credentials are enabled and origins are wildcarded, use
+        # allow_origin_regex to force Starlette to reflect the request's
+        # Origin header instead of sending "Access-Control-Allow-Origin: *".
+        # The CORS spec forbids "*" when credentials are allowed, and while
+        # Starlette handles this correctly for preflight requests, its
+        # simple-response path does not — using a regex avoids the issue.
+        origins = list(settings.cors.allow_origins)
+        origin_regex = None
+        if settings.cors.allow_credentials and origins == ["*"]:
+            origins = []
+            origin_regex = ".*"
+            logger.debug(
+                "CORS: credentials enabled with wildcard origins, using origin reflection"
+            )
+
+        logger.info(
+            "CORS: handling locally (allow_origins=%s, allow_methods=%s, allow_credentials=%s)",
+            settings.cors.allow_origins,
+            settings.cors.allow_methods,
+            settings.cors.allow_credentials,
+        )
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_origin_regex=origin_regex,
+            allow_methods=list(settings.cors.allow_methods),
+            allow_headers=list(settings.cors.allow_headers),
+            allow_credentials=settings.cors.allow_credentials,
+            expose_headers=list(settings.cors.expose_headers),
+            max_age=settings.cors.max_age,
+        )
+    else:
+        logger.info("CORS: proxying OPTIONS to upstream")
+
     return app
 
 
@@ -177,7 +227,14 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             upstream=str(settings.upstream_url),
             override_host=settings.override_host,
         ).proxy_request,
-        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        methods=[
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            *(["OPTIONS"] if settings.proxy_options else []),
+        ],
     )
 
     return app

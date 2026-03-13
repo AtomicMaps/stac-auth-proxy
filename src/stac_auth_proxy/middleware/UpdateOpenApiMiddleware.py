@@ -11,6 +11,7 @@ from starlette.types import ASGIApp, Scope
 from ..config import EndpointMethods
 from ..utils.middleware import JsonResponseMiddleware
 from ..utils.requests import find_match
+from ..utils.stac import ensure_type
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,8 @@ class OpenApiMiddleware(JsonResponseMiddleware):
     root_path: str = ""
     auth_scheme_name: str = "oidcAuth"
     auth_scheme_override: Optional[dict] = None
+    items_filter_path: Optional[str] = None
+    collections_filter_path: Optional[str] = None
 
     json_content_type_expr: str = r"application/(vnd\.oai\.openapi\+json?|json)"
 
@@ -57,14 +60,14 @@ class OpenApiMiddleware(JsonResponseMiddleware):
             data["servers"] = [{"url": self.root_path}]
 
         # Add security scheme
-        components = data.setdefault("components", {})
-        securitySchemes = components.setdefault("securitySchemes", {})
+        components = ensure_type(data, "components", dict)
+        securitySchemes = ensure_type(components, "securitySchemes", dict)
         securitySchemes[self.auth_scheme_name] = self.auth_scheme_override or {
             "type": "openIdConnect",
             "openIdConnectUrl": self.oidc_discovery_url,
         }
 
-        # Add security to private endpoints
+        # Add security to private endpoints and filtered endpoints
         for path, method_config in data["paths"].items():
             for method, config in method_config.items():
                 if method == "options":
@@ -77,8 +80,14 @@ class OpenApiMiddleware(JsonResponseMiddleware):
                     self.public_endpoints,
                     self.default_public,
                 )
-                if match.is_private:
-                    config.setdefault("security", []).append(
-                        {self.auth_scheme_name: match.required_scopes}
-                    )
+                if match.is_private or self._path_has_filter(path):
+                    security = ensure_type(config, "security", list)
+                    security.append({self.auth_scheme_name: match.required_scopes})
         return data
+
+    def _path_has_filter(self, path: str) -> bool:
+        """Check if a path matches any configured CQL2 filter path."""
+        for filter_path in (self.items_filter_path, self.collections_filter_path):
+            if filter_path and re.match(filter_path, path):
+                return True
+        return False

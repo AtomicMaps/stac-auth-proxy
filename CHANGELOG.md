@@ -1,5 +1,79 @@
 # Changelog
 
+## [1.0.2](https://github.com/developmentseed/stac-auth-proxy/compare/v1.0.1...v1.0.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* update link transformation logic to prevent duplicate root_path in responses ([a71bd8e](https://github.com/developmentseed/stac-auth-proxy/commit/a71bd8e68c047d3a8feb51805cd2dde6775d45d5))
+
+## [1.0.1](https://github.com/developmentseed/stac-auth-proxy/compare/v1.0.0...v1.0.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* ensure openapi spec demonstrates auth when cql2 filters apply ([#135](https://github.com/developmentseed/stac-auth-proxy/issues/135)) ([7310cee](https://github.com/developmentseed/stac-auth-proxy/commit/7310ceef462afadbc0a361211011549505aace94))
+* support filtering bulk item creation ([2c4a791](https://github.com/developmentseed/stac-auth-proxy/commit/2c4a791b9dc6d21a99722da73af8c4623a6470c5))
+
+
+### Documentation
+
+* **record-level-auth:** add filter factory guidance ([47c4e68](https://github.com/developmentseed/stac-auth-proxy/commit/47c4e6820501992ea1dc96dc7c8575a786dfd58e))
+
+## [1.0.0](https://github.com/developmentseed/stac-auth-proxy/compare/v0.11.1...v1.0.0) (2026-02-19)
+
+
+### Features
+
+* handle CORS by default ([#133](https://github.com/developmentseed/stac-auth-proxy/issues/133)) ([4c49b95](https://github.com/developmentseed/stac-auth-proxy/commit/4c49b955d73276fe5d995f1cd742e6f202834f7a))
+* **helm:** add extraContainers in helm-chart ([#132](https://github.com/developmentseed/stac-auth-proxy/issues/132)) ([e0acecb](https://github.com/developmentseed/stac-auth-proxy/commit/e0acecb56cf4d74e3226d50bd7e3e306ac9d6609))
+* validate transaction requests with CQL2 filters ([#131](https://github.com/developmentseed/stac-auth-proxy/issues/131)) ([254bd82](https://github.com/developmentseed/stac-auth-proxy/commit/254bd82576f09b0dab63f6c75ee8725ab1962879)), closes [#21](https://github.com/developmentseed/stac-auth-proxy/issues/21) [#22](https://github.com/developmentseed/stac-auth-proxy/issues/22)
+
+> [!IMPORTANT]
+> Previously, filters only applied to _read_ requests but they now also apply to _create/update/delete_ requests. If upgrading from v0.* and using record-level auth, ensure that your CQL2 filter factories are built to support both read and edit requests.
+
+
+### Bug Fixes
+
+* **jinja2:** use sandboxed environment ([504074f](https://github.com/developmentseed/stac-auth-proxy/commit/504074f9bf5cb17129ad38261d5bb499daced8b4))
+* remove helm chart auth options. ([#126](https://github.com/developmentseed/stac-auth-proxy/issues/126)) ([42015b3](https://github.com/developmentseed/stac-auth-proxy/commit/42015b399938fc92589e8b377352420da9bc217c))
+* stac-fastapi health checks. ([#128](https://github.com/developmentseed/stac-auth-proxy/issues/128)) ([42db5ef](https://github.com/developmentseed/stac-auth-proxy/commit/42db5efdb8d50c7a699640176673412371bc8d82))
+
+## [0.11.1](https://github.com/developmentseed/stac-auth-proxy/compare/v0.11.0...v0.11.1) (2026-01-13)
+
+
+### Features
+
+* Add helm chart auth options. ([#118](https://github.com/developmentseed/stac-auth-proxy/issues/118)) ([cfae34b](https://github.com/developmentseed/stac-auth-proxy/commit/cfae34b5a3a50596dc2ba13bd51cc96144e78d80))
+* Add helm README.md and unit tests ([#117](https://github.com/developmentseed/stac-auth-proxy/issues/117)) ([74a1bc8](https://github.com/developmentseed/stac-auth-proxy/commit/74a1bc8e361cbc85bb48dff4fc4019b2ad8d196d))
+
+
+### Bug Fixes
+
+* Enhance type safety in middleware and utility functions ([#122](https://github.com/developmentseed/stac-auth-proxy/issues/122)) ([52cdd0e](https://github.com/developmentseed/stac-auth-proxy/commit/52cdd0eaf8eb0c98cdb4c18d54c2d23979e5d72a))
+* Helm chart and app version mismatch. ([#120](https://github.com/developmentseed/stac-auth-proxy/issues/120)) ([7998675](https://github.com/developmentseed/stac-auth-proxy/commit/79986751390ae243dee565b2b273d8d67aab5ba5))
+* Make docker image to run as non-root. ([#116](https://github.com/developmentseed/stac-auth-proxy/issues/116)) ([35e06f3](https://github.com/developmentseed/stac-auth-proxy/commit/35e06f3c4fe518c02ab269724ae5c41f3f60ae04))
+* Skip CQL2 filter build for OPTIONS requests ([#123](https://github.com/developmentseed/stac-auth-proxy/issues/123)) ([6ee043e](https://github.com/developmentseed/stac-auth-proxy/commit/6ee043e5742d876df4fc34e63e538ae83997f8a1)), closes [#110](https://github.com/developmentseed/stac-auth-proxy/issues/110)
+
+
+### Documentation
+
+* temporarily disable starlette docstrings ([c4fd9e0](https://github.com/developmentseed/stac-auth-proxy/commit/c4fd9e07d3a03b0b77bdf1621f0402241a0c5ac2))
+
+
+### Miscellaneous Chores
+
+* release 0.11.1 ([976dfab](https://github.com/developmentseed/stac-auth-proxy/commit/976dfaba7bf01287045298e4834388f9fa6b1f45))
+
+## [0.11.0](https://github.com/developmentseed/stac-auth-proxy/compare/v0.10.1...v0.11.0) (2025-12-15)
+
+
+### Bug Fixes
+
+* **auth:** Authentication failures now return 401 instead of 403
+* **auth:** correct HTTP status codes for authentication and authorization failures ([#108](https://github.com/developmentseed/stac-auth-proxy/issues/108)) ([17227e4](https://github.com/developmentseed/stac-auth-proxy/commit/17227e447c188d73426ed1771cc45d95b141a4e9))
+* Ensure x-forwarded-port header is used in Forwarded header ([#115](https://github.com/developmentseed/stac-auth-proxy/issues/115)) ([78525b1](https://github.com/developmentseed/stac-auth-proxy/commit/78525b131b259748e00df1e38c54fb152414da4d))
+
 ## [0.10.1](https://github.com/developmentseed/stac-auth-proxy/compare/v0.10.0...v0.10.1) (2025-12-03)
 
 
