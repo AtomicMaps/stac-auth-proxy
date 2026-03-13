@@ -7,11 +7,10 @@ classifiers = [
 ]
 dependencies = [
   "brotli>=1.1.0",
-  "cql2==0.5.2",
+  "cql2>=0.5.3",
   "cryptography>=44.0.1",
   "fastapi>=0.115.5",
   "httpx[http2]>=0.28.0",
-  "httpcore>=1.0.9",
   "jinja2>=3.1.6",
   "pydantic-settings>=2.6.1",
   "pyjwt>=2.10.1",
@@ -25,7 +24,7 @@ license = {file = "LICENSE"}
 name = "stac-auth-proxy"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.10.1"
+version = "1.0.2"
 
 [project.optional-dependencies]
 docs = [

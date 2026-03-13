@@ -46,6 +46,23 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+# Additional volumes to mount
+extraVolumes: []
+# Example:
+# extraVolumes:
+#   - name: filters
+#     configMap:
+#       name: stac-auth-proxy-filters
+
+# Additional volume mounts for the container
+extraVolumeMounts: []
+# Example:
+# extraVolumeMounts:
+#   - name: filters
+#     mountPath: /app/src/stac_auth_proxy/custom_filters.py
+#     subPath: custom_filters.py
+#     readOnly: true
+
 # Init containers to run before the main container starts
 # initContainers: []
 # Example:
@@ -53,6 +70,15 @@ affinity: {}
 #   - name: wait-for-oidc
 #     image: busybox:1.35
 #     command: ['sh', '-c', 'until nc -z oidc-server 8080; do sleep 2; done']
+
+# extraContainer containers to run alongside the main container
+extraContainers: []
+# Example:
+# extraContainers:
+#   - name: oauth2-proxy
+#     image: quay.io/oauth2-proxy/oauth2-proxy:latest
+#     ports:
+#       - containerPort: 4180
 
 # Environment variables for the application
 env:
@@ -78,7 +104,9 @@ env:
       "^/api.html$": ["GET"],
       "^/api$": ["GET"],
       "^/docs/oauth2-redirect": ["GET"],
-      "^/healthz": ["GET"]
+      "^/healthz": ["GET"],
+      "^/_mgmt/ping": ["GET"],
+      "^/_mgmt/health": ["GET"]
     }
 
 
@@ -93,4 +121,4 @@ serviceAccount:
   name: ""
   # Image pull secrets to add to the service account
   imagePullSecrets: []
-  # - name: my-registry-secret 
+  # - name: my-registry-secret
