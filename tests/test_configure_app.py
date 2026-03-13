@@ -40,6 +40,13 @@ def test_disallowed_module_namespace():
         ci()
 
 
+def test_disallowed_module_namespace_configurable():
+    """Reject modules outside a custom operator-configured namespace."""
+    ci = _ClassInput(cls="stac_auth_proxy.config:str2list")
+    with pytest.raises(ValueError, match="not in the allowed namespaces"):
+        ci(allowed_prefixes=("my_package.",))
+
+
 def test_path_traversal():
     """Reject module paths containing '..' traversal."""
     ci = _ClassInput(cls="stac_auth_proxy...config:Settings")
@@ -50,7 +57,7 @@ def test_path_traversal():
 def test_private_class_access():
     """Reject access to private or dunder class names."""
     ci = _ClassInput(cls="stac_auth_proxy.config:_ClassInput")
-    with pytest.raises(ValueError, match="path traversal or private access"):
+    with pytest.raises(ValueError, match="Invalid class name"):
         ci()
 
 
@@ -65,3 +72,41 @@ def test_valid_callable():
     """Allow and invoke a valid callable within the permitted namespace."""
     ci = _ClassInput(cls="stac_auth_proxy.config:str2list")
     assert ci() is None
+
+
+def test_valid_callable_custom_prefix():
+    """Allow a callable when its namespace is in a custom allowed prefix list."""
+    ci = _ClassInput(cls="stac_auth_proxy.config:str2list")
+    assert ci(allowed_prefixes=("stac_auth_proxy.",)) is None
+
+
+@pytest.mark.parametrize(
+    "cls_path",
+    [
+        "../../etc/passwd:Evil",
+        "os;system:Evil",
+        "stac_auth_proxy\x00evil:Evil",
+        ".stac_auth_proxy.config:str2list",
+        "stac_auth_proxy/.config:str2list",
+    ],
+)
+def test_invalid_module_path_characters(cls_path):
+    """Reject module paths containing special or injection characters."""
+    ci = _ClassInput(cls=cls_path)
+    with pytest.raises(ValueError, match="Invalid module path|Invalid class name|expected 'module.path:ClassName' format"):
+        ci()
+
+
+@pytest.mark.parametrize(
+    "cls_path",
+    [
+        "stac_auth_proxy.config:str 2list",
+        "stac_auth_proxy.config:str-2list",
+        "stac_auth_proxy.config:str;2list",
+    ],
+)
+def test_invalid_class_name_characters(cls_path):
+    """Reject class names containing special characters."""
+    ci = _ClassInput(cls=cls_path)
+    with pytest.raises(ValueError, match="Invalid class name"):
+        ci()

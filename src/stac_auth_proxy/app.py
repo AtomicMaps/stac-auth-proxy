@@ -129,9 +129,9 @@ def configure_app(
         app.add_middleware(Cql2RewriteLinksFilterMiddleware)
         app.add_middleware(
             Cql2BuildFilterMiddleware,
-            items_filter=settings.items_filter() if settings.items_filter else None,
+            items_filter=settings.items_filter(settings.allowed_module_prefixes) if settings.items_filter else None,
             collections_filter=(
-                settings.collections_filter() if settings.collections_filter else None
+                settings.collections_filter(settings.allowed_module_prefixes) if settings.collections_filter else None
             ),
             collections_filter_path=settings.collections_filter_path,
             items_filter_path=settings.items_filter_path,

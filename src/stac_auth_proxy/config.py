@@ -1,6 +1,7 @@
 """Configuration for the STAC Auth Proxy."""
 
 import importlib
+import re
 from typing import Any, Literal, Optional, Sequence, TypeAlias, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -16,6 +17,9 @@ EndpointMethodsWithScope: TypeAlias = dict[
 _PREFIX_PATTERN = r"^/.*$"
 
 ALLOWED_MODULE_PREFIXES: tuple[str, ...] = ("stac_auth_proxy.",)
+
+_MODULE_PATH_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.]*$")
+_CLASS_NAME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*$")
 
 
 def str2list(x: Optional[str] = None) -> Optional[Sequence[str]]:
@@ -33,7 +37,7 @@ class _ClassInput(BaseModel):
     args: Sequence[str] = Field(default_factory=list)
     kwargs: dict[str, str] = Field(default_factory=dict)
 
-    def __call__(self):
+    def __call__(self, allowed_prefixes: tuple[str, ...] = ALLOWED_MODULE_PREFIXES):
         """Dynamically load a class and instantiate it with args & kwargs."""
         if ":" not in self.cls:
             raise ValueError(
@@ -42,12 +46,22 @@ class _ClassInput(BaseModel):
 
         module_path, class_name = self.cls.rsplit(":", 1)
 
-        if not any(
-            module_path.startswith(prefix) for prefix in ALLOWED_MODULE_PREFIXES
-        ):
+        if not _MODULE_PATH_RE.match(module_path):
+            raise ValueError(
+                f"Invalid module path '{module_path}': only alphanumeric characters, "
+                f"underscores, and dots are permitted"
+            )
+
+        if not _CLASS_NAME_RE.match(class_name):
+            raise ValueError(
+                f"Invalid class name '{class_name}': only alphanumeric characters and "
+                f"underscores are permitted"
+            )
+
+        if not any(module_path.startswith(prefix) for prefix in allowed_prefixes):
             raise ValueError(
                 f"Module '{module_path}' is not in the allowed namespaces: "
-                f"{ALLOWED_MODULE_PREFIXES}"
+                f"{allowed_prefixes}"
             )
 
         if ".." in module_path or class_name.startswith("_"):
@@ -142,6 +156,7 @@ class Settings(BaseSettings):
     }
 
     # Filters
+    allowed_module_prefixes: tuple[str, ...] = ALLOWED_MODULE_PREFIXES
     items_filter: Optional[_ClassInput] = None
     items_filter_path: str = r"^(/collections/([^/]+)/items(/[^/]+)?$|/search$|/aggregate$|/collections/([^/]+)/tiles/[^/]+/[^/]+/[^/]+\.mvt$)"
     collections_filter: Optional[_ClassInput] = None
@@ -158,6 +173,14 @@ class Settings(BaseSettings):
         if not data.get("oidc_discovery_internal_url"):
             data["oidc_discovery_internal_url"] = data.get("oidc_discovery_url")
         return data
+
+    @field_validator("allowed_module_prefixes", mode="before")
+    @classmethod
+    def parse_allowed_module_prefixes(cls, v) -> tuple[str, ...]:
+        """Parse a comma-separated string of allowed module prefixes."""
+        if isinstance(v, str):
+            return tuple(s.strip() for s in v.split(",") if s.strip())
+        return v
 
     @field_validator("allowed_jwt_audiences", mode="before")
     @classmethod
