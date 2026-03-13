@@ -123,7 +123,6 @@ class Settings(BaseSettings):
     enable_authentication_extension: bool = True
     default_public: bool = False
     public_endpoints: EndpointMethods = {
-        r"^/$": ["GET"],
         r"^/api.html$": ["GET"],
         r"^/api$": ["GET"],
         r"^/conformance$": ["GET"],
@@ -133,14 +132,13 @@ class Settings(BaseSettings):
         r"^/_mgmt/health": ["GET"],
     }
     private_endpoints: EndpointMethodsWithScope = {
-        # https://github.com/stac-api-extensions/collection-transaction/blob/v1.0.0-beta.1/README.md#methods
-        r"^/collections$": ["POST"],
-        r"^/collections/([^/]+)$": ["PUT", "PATCH", "DELETE"],
-        # https://github.com/stac-api-extensions/transaction/blob/v1.0.0-rc.3/README.md#methods
-        r"^/collections/([^/]+)/items$": ["POST"],
-        r"^/collections/([^/]+)/items/([^/]+)$": ["PUT", "PATCH", "DELETE"],
-        # https://stac-utils.github.io/stac-fastapi/api/stac_fastapi/extensions/third_party/bulk_transactions/#bulktransactionextension
-        r"^/collections/([^/]+)/bulk_items$": ["POST"],
+        r"^/(.*)$": [["GET", "read:stac"]],
+        r"^/search$": [["POST", "read:stac"]],
+        r"^/aggregate$": [["POST", "read:stac"]],
+        r"^/collections/aggregate$": [["POST", "read:stac"]],
+        r"^/collections$": [["POST", "create:stac"]],
+        r"^/collections/([^/]+)$": [["PUT", "update:stac"], ["PATCH", "update:stac"], ["POST", "create:stac"], ["DELETE", "delete:stac"]],
+        r"^/admin/([^/]+)$": [["POST", "create:stac"]],
     }
 
     # Filters
