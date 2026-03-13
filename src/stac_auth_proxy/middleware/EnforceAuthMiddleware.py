@@ -75,6 +75,7 @@ class EnforceAuthMiddleware:
     default_public: bool
     oidc_discovery_url: HttpUrl
     allowed_jwt_audiences: Optional[Sequence[str]] = None
+    proxy_options: bool = False
     state_key: str = "payload"
 
     _oidc_config: Optional[OidcService] = None

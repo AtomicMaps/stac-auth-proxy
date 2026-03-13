@@ -148,6 +148,7 @@ def configure_app(
         default_public=settings.default_public,
         oidc_discovery_url=settings.oidc_discovery_internal_url,
         allowed_jwt_audiences=settings.allowed_jwt_audiences,
+        proxy_options=settings.proxy_options,
     )
 
     if settings.root_path or settings.upstream_url.path != "/":

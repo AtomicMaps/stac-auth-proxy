@@ -24,9 +24,12 @@ def append_body_filter(
 ) -> dict:
     """Insert a filter expression into a request body. If a filter already exists, combine them."""
     cur_filter = body.get("filter")
+
     filter_lang = filter_lang or body.get("filter-lang", "cql2-json")
+
     if cur_filter:
         filter = filter + Expr(cur_filter)
+
     return {
         **body,
         "filter": filter.to_text() if filter_lang == "cql2-text" else filter.to_json(),
