@@ -75,6 +75,7 @@ class EnforceAuthMiddleware:
     default_public: bool
     oidc_discovery_url: HttpUrl
     allowed_jwt_audiences: Optional[Sequence[str]] = None
+    proxy_options: bool = False
     state_key: str = "payload"
 
     _oidc_config: Optional[OidcService] = None
@@ -88,6 +89,10 @@ class EnforceAuthMiddleware:
 
         # Skip authentication for OPTIONS requests, https://fetch.spec.whatwg.org/#cors-protocol-and-credentials
         if request.method == "OPTIONS":
+            if self.proxy_options:
+                # When proxy_options=True, forward OPTIONS to upstream without auth
+                return await self.app(scope, receive, send)
+
             origin = request.headers.get("origin")
             if not origin:
                 # If no origin header, just return 204 without CORS headers
