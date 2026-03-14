@@ -1,11 +1,12 @@
 """Configuration for the STAC Auth Proxy."""
 
-import importlib
-from typing import Any, Literal, Optional, Sequence, TypeAlias, Union
+from typing import Any, Callable, Literal, Optional, Sequence, TypeAlias, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.networks import HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from stac_auth_proxy.filters.scope_based_item_filter import scope_based_filter
 
 METHODS = Literal["GET", "POST", "PUT", "DELETE", "PATCH"]
 EndpointMethods: TypeAlias = dict[str, Sequence[METHODS]]
@@ -15,8 +16,6 @@ EndpointMethodsWithScope: TypeAlias = dict[
 
 _PREFIX_PATTERN = r"^/.*$"
 
-ALLOWED_MODULE_PREFIXES: tuple[str, ...] = ("stac_auth_proxy.",)
-
 
 def str2list(x: Optional[str] = None) -> Optional[Sequence[str]]:
     """Convert string to list based on , delimiter."""
@@ -24,45 +23,6 @@ def str2list(x: Optional[str] = None) -> Optional[Sequence[str]]:
         return x.replace(" ", "").split(",")
 
     return None
-
-
-class _ClassInput(BaseModel):
-    """Input model for dynamically loading a class or function."""
-
-    cls: str
-    args: Sequence[str] = Field(default_factory=list)
-    kwargs: dict[str, str] = Field(default_factory=dict)
-
-    def __call__(self):
-        """Dynamically load a class and instantiate it with args & kwargs."""
-        if ":" not in self.cls:
-            raise ValueError(
-                f"Invalid class path '{self.cls}': expected 'module.path:ClassName' format"
-            )
-
-        module_path, class_name = self.cls.rsplit(":", 1)
-
-        if not any(
-            module_path.startswith(prefix) for prefix in ALLOWED_MODULE_PREFIXES
-        ):
-            raise ValueError(
-                f"Module '{module_path}' is not in the allowed namespaces: "
-                f"{ALLOWED_MODULE_PREFIXES}"
-            )
-
-        if ".." in module_path or class_name.startswith("_"):
-            raise ValueError(
-                f"Invalid class path '{self.cls}': path traversal or private "
-                f"access is not permitted"
-            )
-
-        module = importlib.import_module(module_path)
-        cls = getattr(module, class_name)
-
-        if not callable(cls):
-            raise TypeError(f"'{self.cls}' resolved to a non-callable object")
-
-        return cls(*self.args, **self.kwargs)
 
 
 class CorsSettings(BaseModel):
@@ -123,7 +83,6 @@ class Settings(BaseSettings):
     enable_authentication_extension: bool = True
     default_public: bool = False
     public_endpoints: EndpointMethods = {
-        r"^/$": ["GET"],
         r"^/api.html$": ["GET"],
         r"^/api$": ["GET"],
         r"^/conformance$": ["GET"],
@@ -133,20 +92,24 @@ class Settings(BaseSettings):
         r"^/_mgmt/health": ["GET"],
     }
     private_endpoints: EndpointMethodsWithScope = {
-        # https://github.com/stac-api-extensions/collection-transaction/blob/v1.0.0-beta.1/README.md#methods
-        r"^/collections$": ["POST"],
-        r"^/collections/([^/]+)$": ["PUT", "PATCH", "DELETE"],
-        # https://github.com/stac-api-extensions/transaction/blob/v1.0.0-rc.3/README.md#methods
-        r"^/collections/([^/]+)/items$": ["POST"],
-        r"^/collections/([^/]+)/items/([^/]+)$": ["PUT", "PATCH", "DELETE"],
-        # https://stac-utils.github.io/stac-fastapi/api/stac_fastapi/extensions/third_party/bulk_transactions/#bulktransactionextension
-        r"^/collections/([^/]+)/bulk_items$": ["POST"],
+        r"^/(.*)$": [("GET", "read:stac")],
+        r"^/search$": [("POST", "read:stac")],
+        r"^/aggregate$": [("POST", "read:stac")],
+        r"^/collections/aggregate$": [("POST", "read:stac")],
+        r"^/collections$": [("POST", "create:stac")],
+        r"^/collections/([^/]+)$": [
+            ("PUT", "update:stac"),
+            ("PATCH", "update:stac"),
+            ("POST", "create:stac"),
+            ("DELETE", "delete:stac"),
+        ],
+        r"^/admin/([^/]+)$": [("POST", "create:stac")],
     }
 
     # Filters
-    items_filter: Optional[_ClassInput] = None
+    items_filter: Optional[Callable] = Field(default_factory=scope_based_filter)
     items_filter_path: str = r"^(/collections/([^/]+)/items(/[^/]+)?$|/search$|/aggregate$|/collections/([^/]+)/tiles/[^/]+/[^/]+/[^/]+\.mvt$)"
-    collections_filter: Optional[_ClassInput] = None
+    collections_filter: Optional[Callable] = None
     collections_filter_path: str = r"^/collections(/[^/]+)?$"
 
     model_config = SettingsConfigDict(
