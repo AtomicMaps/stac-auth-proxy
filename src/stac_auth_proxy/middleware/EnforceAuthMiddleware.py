@@ -189,7 +189,7 @@ class EnforceAuthMiddleware:
                 )
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Insufficient permissions.",
+                    detail="Insufficient permissions.",
                     headers={
                         "WWW-Authenticate": f'Bearer scope="{" ".join(required_scopes)}"'
                     },

@@ -7,6 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 from utils import AppFactory, get_upstream_request
 
+from stac_auth_proxy.filters import Template
+
 FILTER_EXPR_CASES = [
     pytest.param(
         "(properties.private = false)",
@@ -131,11 +133,9 @@ def _build_items_filter_client(
     """Build a TestClient configured for either authenticated or anonymous usage."""
     app = app_factory(
         upstream_url=src_api_server,
-        items_filter={
-            "cls": "stac_auth_proxy.filters:Template",
-            "args": [template_expr.strip()],
-        },
+        items_filter=Template(template_expr.strip()),
         default_public=True,
+        private_endpoints={},
     )
     headers = (
         {"Authorization": f"Bearer {token_builder({'sub': 'test-user'})}"}
@@ -382,11 +382,10 @@ def _build_collections_filter_client(
     """Build a TestClient configured for either authenticated or anonymous usage."""
     app = app_factory(
         upstream_url=src_api_server,
-        collections_filter={
-            "cls": "stac_auth_proxy.filters:Template",
-            "args": [template_expr.strip()],
-        },
+        collections_filter=Template(template_expr.strip()),
+        items_filter=None,
         default_public=True,
+        private_endpoints={},
     )
     headers = (
         {"Authorization": f"Bearer {token_builder({'sub': 'test-user'})}"}
