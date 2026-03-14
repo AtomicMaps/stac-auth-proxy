@@ -1,6 +1,7 @@
 """Configuration for the STAC Auth Proxy."""
 
 from typing import Any, Callable, Literal, Optional, Sequence, TypeAlias, Union
+import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.networks import HttpUrl
@@ -15,8 +16,6 @@ EndpointMethodsWithScope: TypeAlias = dict[
 ]
 
 _PREFIX_PATTERN = r"^/.*$"
-
-ALLOWED_MODULE_PREFIXES: tuple[str, ...] = ("stac_auth_proxy.",)
 
 
 def str2list(x: Optional[str] = None) -> Optional[Sequence[str]]:
