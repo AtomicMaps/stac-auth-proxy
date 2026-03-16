@@ -116,6 +116,8 @@ def configure_app(
                 if settings.collections_filter
                 else None
             ),
+            swagger_ui_path=settings.swagger_ui_endpoint,
+            swagger_ui_title=settings.swagger_ui_login_title,
         )
 
     if settings.items_filter or settings.collections_filter:

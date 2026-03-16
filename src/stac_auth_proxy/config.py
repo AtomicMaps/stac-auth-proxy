@@ -78,6 +78,7 @@ class Settings(BaseSettings):
         pattern=_PREFIX_PATTERN, default="/api.html"
     )
     swagger_ui_init_oauth: dict = Field(default_factory=dict)
+    swagger_ui_login_title: str = "STAC API Docs"
 
     # Auth
     enable_authentication_extension: bool = True
