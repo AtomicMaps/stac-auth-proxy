@@ -9,7 +9,7 @@ STAGING_FILTER = "properties._staging IS NULL"
 
 @pytest.fixture
 def filter_fn():
-    """Default scope_based_filter instance."""
+    """Instaniate scope_based_filter instance."""
     return scope_based_filter()
 
 
