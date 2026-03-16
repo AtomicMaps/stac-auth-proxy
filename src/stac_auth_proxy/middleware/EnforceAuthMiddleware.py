@@ -176,8 +176,10 @@ class EnforceAuthMiddleware:
 
         # Check authorization (scopes)
         if required_scopes:
-            token_scopes = set(payload.get("scope", "").split())
-            missing_scopes = set(required_scopes) - token_scopes
+            token_scopes = payload.get("permissions")
+            if not token_scopes:
+                token_scopes = payload.get("scope", "").split(" ")
+            missing_scopes = set(required_scopes) - set(token_scopes)
             if missing_scopes:
                 logger.warning(
                     "Insufficient scopes for user %s. Required: %s, Has: %s",
@@ -187,7 +189,7 @@ class EnforceAuthMiddleware:
                 )
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Insufficient permissions. Required scopes: {', '.join(missing_scopes)}",
+                    detail="Insufficient permissions.",
                     headers={
                         "WWW-Authenticate": f'Bearer scope="{" ".join(required_scopes)}"'
                     },

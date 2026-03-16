@@ -386,6 +386,7 @@ def test_jwt_audience_validation(
         oidc_discovery_url="https://example-stac-api.com/.well-known/openid-configuration",
         default_public=False,
         allowed_jwt_audiences=allowed_audiences,
+        private_endpoints={r"^/(.*)$": ["GET"]},
     )
     test_app = app_factory(upstream_url=source_api_server)
 
@@ -469,6 +470,7 @@ def test_allowed_audiences_configuration_formats(
         oidc_discovery_url="https://example-stac-api.com/.well-known/openid-configuration",
         default_public=False,
         allowed_jwt_audiences=allowed_audiences_config,
+        private_endpoints={r"^/(.*)$": ["GET"]},
     )
     test_app = app_factory(upstream_url=source_api_server)
 

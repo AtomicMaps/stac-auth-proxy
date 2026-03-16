@@ -116,6 +116,8 @@ def configure_app(
                 if settings.collections_filter
                 else None
             ),
+            swagger_ui_path=settings.swagger_ui_endpoint,
+            swagger_ui_title=settings.swagger_ui_login_title,
         )
 
     if settings.items_filter or settings.collections_filter:
@@ -129,10 +131,8 @@ def configure_app(
         app.add_middleware(Cql2RewriteLinksFilterMiddleware)
         app.add_middleware(
             Cql2BuildFilterMiddleware,
-            items_filter=settings.items_filter() if settings.items_filter else None,
-            collections_filter=(
-                settings.collections_filter() if settings.collections_filter else None
-            ),
+            items_filter=settings.items_filter,
+            collections_filter=settings.collections_filter,
             collections_filter_path=settings.collections_filter_path,
             items_filter_path=settings.items_filter_path,
         )

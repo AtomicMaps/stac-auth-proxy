@@ -99,6 +99,7 @@ def test_oidc_in_openapi_spec_private_endpoints(
         openapi_spec_endpoint=source_api.openapi_url,
         default_public=True,
         private_endpoints=private_endpoints,
+        items_filter=None,
     )
     client = TestClient(app)
 
