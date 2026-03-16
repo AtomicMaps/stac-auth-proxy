@@ -85,6 +85,7 @@ class Settings(BaseSettings):
     default_public: bool = False
     public_endpoints: EndpointMethods = {
         r"^/api.html$": ["GET"],
+        r"^/api$": ["GET"],
         r"^/conformance$": ["GET"],
         r"^/docs/oauth2-redirect": ["GET"],
         r"^/healthz": ["GET"],
