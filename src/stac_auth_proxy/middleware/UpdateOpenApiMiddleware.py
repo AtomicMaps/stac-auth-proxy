@@ -280,8 +280,6 @@ class OpenApiMiddleware(JsonResponseMiddleware):
                     security = ensure_type(config, "security", list)
                     security.append({self.auth_scheme_name: match.required_scopes})
         return data
-<<<<<<< HEAD
-=======
 
     def _path_has_filter(self, path: str) -> bool:
         """Check if a path matches any configured CQL2 filter path."""
@@ -316,4 +314,3 @@ class OpenApiMiddleware(JsonResponseMiddleware):
             await response(scope, receive, send)
             return
         await super().__call__(scope, receive, send)
->>>>>>> atomicmaps
