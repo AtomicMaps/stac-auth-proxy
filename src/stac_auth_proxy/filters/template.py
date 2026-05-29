@@ -16,10 +16,9 @@ class Template:
 
     def __post_init__(self):
         """Initialize the Jinja2 environment."""
-        self.env = SandboxedEnvironment(loader=BaseLoader).from_string(
-            self.template_str
-        )
+        self.env = SandboxedEnvironment(loader=BaseLoader)
+        self._template = self.env.from_string(self.template_str)
 
     async def __call__(self, context: dict[str, Any]) -> str:
         """Render a CQL2 filter expression with the request and auth token."""
-        return self.env.render(**context).strip()
+        return self._template.render(**context).strip()
