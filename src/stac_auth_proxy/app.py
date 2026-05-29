@@ -94,7 +94,16 @@ def configure_app(
             default_public=settings.default_public,
             public_endpoints=settings.public_endpoints,
             private_endpoints=settings.private_endpoints,
+            items_filter_path=(
+                settings.items_filter_path if settings.items_filter else None
+            ),
+            collections_filter_path=(
+                settings.collections_filter_path
+                if settings.collections_filter
+                else None
+            ),
             oidc_discovery_url=str(settings.oidc_discovery_url),
+            root_path=settings.root_path,
         )
 
     if settings.openapi_spec_endpoint:

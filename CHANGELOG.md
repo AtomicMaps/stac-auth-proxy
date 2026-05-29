@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.1.1](https://github.com/developmentseed/stac-auth-proxy/compare/v1.1.0...v1.1.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* bump versions of fastapi + starlette ([#170](https://github.com/developmentseed/stac-auth-proxy/issues/170)) ([52eae09](https://github.com/developmentseed/stac-auth-proxy/commit/52eae097a54c2407d3510a2b1265311a2a0327a3))
+
+## [1.1.0](https://github.com/developmentseed/stac-auth-proxy/compare/v1.0.3...v1.1.0) (2026-05-22)
+
+
+### Features
+
+* **auth-extension:** annotate links with auth:refs if ([#138](https://github.com/developmentseed/stac-auth-proxy/issues/138)) ([2109a4b](https://github.com/developmentseed/stac-auth-proxy/commit/2109a4bcff9ff34ef7bb6d1ea40a76eacbe8c71e))
+* **helm:** add horizontal scaling (hpa) support. ([#163](https://github.com/developmentseed/stac-auth-proxy/issues/163)) ([ce6c245](https://github.com/developmentseed/stac-auth-proxy/commit/ce6c2455366651155f84063f991db069dc8826e6))
+
+
+### Bug Fixes
+
+* **auth-extension:** support root_paths ([c9dc496](https://github.com/developmentseed/stac-auth-proxy/commit/c9dc49674c91ded8e341fb1b7a6c1a80033c71ae))
+* ensure POST request CQL2 filter persists in links ([#164](https://github.com/developmentseed/stac-auth-proxy/issues/164)) ([543534d](https://github.com/developmentseed/stac-auth-proxy/commit/543534d5ad9cc50410d68d5d00a18ca5f1715877))
+
+## [1.0.3](https://github.com/developmentseed/stac-auth-proxy/compare/v1.0.2...v1.0.3) (2026-03-28)
+
+
+### Bug Fixes
+
+* **auth-extension:** consider link method when adding auth:refs ([158f507](https://github.com/developmentseed/stac-auth-proxy/commit/158f50756ffb44086eb872b427c46e8101518c50))
+* disable server reload by default ([c109801](https://github.com/developmentseed/stac-auth-proxy/commit/c1098010e02b301041f05ad5401ab6a514366c85)), closes [#142](https://github.com/developmentseed/stac-auth-proxy/issues/142)
+* **helm:** add liveliness and readiness probes to helm chart ([#143](https://github.com/developmentseed/stac-auth-proxy/issues/143)) ([ba55f64](https://github.com/developmentseed/stac-auth-proxy/commit/ba55f645944af6fda571d22161738baeb81c43a1))
+* **lifespan:** handle gateway errors on server health checks ([4e00c0e](https://github.com/developmentseed/stac-auth-proxy/commit/4e00c0e2952c7c368802cd41ca67c9e3cc4ec5f2)), closes [#141](https://github.com/developmentseed/stac-auth-proxy/issues/141)
+
 ## [1.0.2](https://github.com/developmentseed/stac-auth-proxy/compare/v1.0.1...v1.0.2) (2026-03-03)
 
 

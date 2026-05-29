@@ -3,7 +3,7 @@
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 from starlette.datastructures import Headers
@@ -34,6 +34,10 @@ class AuthenticationExtensionMiddleware(JsonResponseMiddleware):
     extension_url: str = (
         "https://stac-extensions.github.io/authentication/v1.1.0/schema.json"
     )
+
+    items_filter_path: Optional[str] = None
+    collections_filter_path: Optional[str] = None
+    root_path: str = ""
 
     json_content_type_expr: str = r"application/(geo\+)?json"
 
@@ -88,14 +92,22 @@ class AuthenticationExtensionMiddleware(JsonResponseMiddleware):
             if "href" not in link:
                 logger.warning("Link %s has no href", link)
                 continue
+            link_path = urlparse(link["href"]).path
+            # Some upstreams honor the Forwarded header's path component and bake
+            # root_path into link hrefs; strip it so filter_path/endpoint regexes
+            # (which are written relative to the STAC API) match either form.
+            if self.root_path and link_path.startswith(self.root_path):
+                link_path = link_path[len(self.root_path) :] or "/"
             match = find_match(
-                path=urlparse(link["href"]).path,
+                path=link_path,
                 method=link.get("method", "GET").upper(),
                 private_endpoints=self.private_endpoints,
                 public_endpoints=self.public_endpoints,
                 default_public=self.default_public,
+                items_filter_path=self.items_filter_path,
+                collections_filter_path=self.collections_filter_path,
             )
-            if match.is_private:
+            if match.uses_auth:
                 auth_refs = ensure_type(link, "auth:refs", list)
                 auth_refs.append(self.auth_scheme_name)
 

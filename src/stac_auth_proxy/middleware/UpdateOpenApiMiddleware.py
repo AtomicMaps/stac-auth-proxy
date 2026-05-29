@@ -218,6 +218,7 @@ class OpenApiMiddleware(JsonResponseMiddleware):
     root_path: str = ""
     auth_scheme_name: str = "oidcAuth"
     auth_scheme_override: Optional[dict] = None
+
     items_filter_path: Optional[str] = None
     collections_filter_path: Optional[str] = None
     swagger_ui_path: Optional[str] = None
@@ -272,8 +273,10 @@ class OpenApiMiddleware(JsonResponseMiddleware):
                     self.private_endpoints,
                     self.public_endpoints,
                     self.default_public,
+                    items_filter_path=self.items_filter_path,
+                    collections_filter_path=self.collections_filter_path,
                 )
-                if match.is_private or self._path_has_filter(path):
+                if match.uses_auth:
                     security = ensure_type(config, "security", list)
                     security.append({self.auth_scheme_name: match.required_scopes})
         return data
